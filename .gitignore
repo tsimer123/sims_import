@@ -1,8 +1,0 @@
-/env/
-/__pycache__/
-*/__pycache__/
-*/*/__pycache__/
-*/*/*/__pycache__/
-.env
-/sims_files/test/
-/tests/files/filereader/*.csv
