@@ -17,49 +17,6 @@ from handlers_files.type_data import SimFields, SimFieldsNumber
 
 load_dotenv()
 
-
-def test_csv():
-    name_files = 'simCardList_20230321_092640.csv'    
- 
-    size = os.path.getsize(name_files) / (1024 * 1024)
-
-    field_size_limit = size / 1
-
-    c = field_size_limit * 10000
-
-    d = int(round(c, 0))
-
-    print(csv.field_size_limit())
-
-    csv.field_size_limit(d)
-
-    print(csv.field_size_limit())
-    
-    with open(name_files,'rb') as f:
-
-        tmp = detect(f.read())   
-    
-    encoding_file = tmp['encoding']
-
-    with open(name_files, newline='', encoding=encoding_file) as csvfile:       
-        
-        print(csv.field_size_limit())
-
-        dialect = csv.Sniffer().sniff(csvfile.readline())
-        csvfile.seek(0)        
-
-        reader = csv.reader(csvfile, dialect)
-
-        for row in reader:
-            print(row)
-
-    print(1)
-
-    time.sleep(15)
-
-    print(2)
-
-
 class FileReader():
 
     def __init__(self, in_dir_files: str, in_name_files: str) -> None:
