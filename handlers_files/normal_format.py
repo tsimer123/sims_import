@@ -17,8 +17,12 @@ class NormalFormat:
         if len(sim_info['number_tel']) < 11:
             if sim_info['number_tel'][0] != 7:
                 sim_info['number_tel'] = '7' + sim_info['number_tel']
-                       
-        return sim_info
+        if len(sim_info['number_tel']) == 11:
+            return sim_info
+        else:
+            sim_info['number_tel'] = 0
+            return sim_info
+
     
     
     @staticmethod
@@ -49,15 +53,18 @@ class NormalFormat:
      
     def normal_activity(self, sim_info: SimFields) -> SimFields:
 
-        if 'activity' in sim_info and sim_info['activity'] != '':
-            try:
-                tmp_date = sim_info['activity']
-                tmp_date = self.replace_month_str_to_int(tmp_date)
-                datetime_object = datetime.strptime(tmp_date, "%d %m %Y %H:%M")
-                sim_info['activity'] = datetime_object
-            except Exception as ex:
-                print(str(ex.args))
-                print('bad format activity to sim: ' + sim_info['number_tel'] + ' - ' + sim_info['activity'])  
+        if 'activity' in sim_info:
+            if sim_info['activity'] != '':
+                try:
+                    tmp_date = sim_info['activity']
+                    tmp_date = self.replace_month_str_to_int(tmp_date)
+                    datetime_object = datetime.strptime(tmp_date, "%d %m %Y %H:%M")
+                    sim_info['activity'] = datetime_object
+                except Exception as ex:
+                    print(str(ex.args))
+                    print('bad format activity to sim: ' + sim_info['number_tel'] + ' - ' + sim_info['activity'])  
+            else:
+                sim_info.pop('activity')
         return sim_info
         
     
@@ -85,8 +92,14 @@ class NormalFormat:
             tmp_date = tmp_date.replace(key, value)
 
         return tmp_date
-
-
-
-
-            
+    
+    
+    @staticmethod
+    def normal_traffic(sim_info: SimFields) -> SimFields:
+        
+        if sim_info['operator'] == 'beeline':
+            if sim_info['traffic'] != '':
+                tmp_traffic = float(sim_info['traffic'])
+                sim_info['traffic'] = int(tmp_traffic * 1024)
+    
+        return sim_info   

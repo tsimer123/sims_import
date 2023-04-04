@@ -3,3 +3,6 @@ class NotValidOperator(Exception):
 
 class NotValidFile(Exception):
     """Not valid file"""
+
+class NotOneOperatorInFile(Exception):
+    """Not one operator in file"""
