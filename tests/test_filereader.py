@@ -7,11 +7,11 @@ from tests.files.filereader.input_data import header_megafon, megafon_number_fie
 class TestFileReader(TestCase):
 
     def test_get_numbers_fields_magafon_meg(self):
-        self.operator = 'megafon'
+        self.operator = 'Мегафон'
         self.assertEqual(FileReader.get_numbers_fields(self, header_megafon), megafon_number_fields)
     
     def test_get_numbers_fields_magafon_mts(self):
-        self.operator = 'megafon'
+        self.operator = 'Мегафон'
         self.assertEqual(FileReader.get_numbers_fields(self, header_megafon), megafon_number_fields_)
 
 

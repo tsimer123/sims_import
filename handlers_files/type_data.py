@@ -20,6 +20,7 @@ class SimFields(TypedDict):
      ip: str
      state: str
      activity: datetime
-     traffic: str    
-     imei: str 
-     hash_tuple: int
+     traffic: str
+     imei: str
+     operator: str
+     hash_data: int

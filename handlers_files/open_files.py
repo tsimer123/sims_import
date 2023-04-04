@@ -79,30 +79,29 @@ class FileReader():
                         raise NotValidFile('Not valid header')
             elif count == 1:
                 if number_iccid is None:
-                    return 'Not valid files'
+                    raise NotValidFile('Not valid files')                    
                 else:
                     iccid = line[number_iccid]
                     if iccid[4:7] == code_mts:
-                        return 'mts'
+                        return 'МТС'
                     if iccid[4:7] == code_megafon:
-                        return 'megafon'
+                        return 'Мегафон'
                     if iccid[4:7] == code_beeline:
-                        return 'beeline'
-                    
-                    return 'Not valid operator'
+                        return 'Билайн'
+                    raise NotValidFile('Not valid operator')
             else:                
-                return 'Not valid file'
+                raise NotValidFile('Not valid files')
             
             count += 1
 
    
     def get_numbers_fields(self, headers: list) -> SimFieldsNumber:
         
-        if self.operator == 'mts':
+        if self.operator == 'МТС':
             dict_fields = dict_fields_mts
-        if self.operator == 'megafon':
+        if self.operator == 'Мегафон':
             dict_fields = dict_fields_megafon
-        if self.operator == 'beeline':
+        if self.operator == 'Билайн':
             dict_fields = dict_fields_beeline
         if self.operator == 'Not valid operator':
             raise NotValidOperator('Not valid operator')
@@ -158,9 +157,16 @@ class FileReader():
 
                     sim_info[key] = tmp_str                    
             else:
-                a = key
-                b = row[value[0]]
-                sim_info[a] = b
+                try:
+                    a = key
+                    b = row[value[0]]
+                    sim_info[a] = b
+                except:
+                    a = key
+                    sim_info[a] = 'empty'
+                    print("not valid row " + sim_info['number_tel'])
+            
+        sim_info['operator'] = self.operator
         
         return sim_info 
     
@@ -171,8 +177,10 @@ class FileReader():
         normal_format = NormalFormat()
 
         sim_info = normal_format.normal_number_tel(sim_info)
-        sim_info = normal_format.normal_ip(sim_info)
-        sim_info = normal_format.normal_activity(sim_info)       
+        if sim_info['number_tel'] != 0:
+            sim_info = normal_format.normal_ip(sim_info)
+            sim_info = normal_format.normal_activity(sim_info)
+            sim_info = normal_format.normal_traffic(sim_info)            
 
         return sim_info
     
@@ -187,7 +195,7 @@ class FileReader():
 
         b_str_temp = bytes(str_temp, 'utf-8')           
         str_sim_hashlib = hashlib.sha3_256(b_str_temp).hexdigest()
-        sim_info['hash_tuple'] = str_sim_hashlib
+        sim_info['hash_data'] = str_sim_hashlib
 
         return sim_info
 
@@ -213,7 +221,7 @@ class FileReaderCsv(FileReader):
         return operator
 
         
-    def get_list_tuple_sims(self) -> List[tuple]:
+    def get_list_sims(self) -> list[SimFields]:
 
         path_files = self._get_path_files()
         encoding_file = self._get_encoding()
@@ -226,39 +234,39 @@ class FileReaderCsv(FileReader):
 
             csvfile.seek(0)
             dialect = csv.Sniffer().sniff(csvfile.readline())
+            # dialect =dialect.doublequote = True
             
             self.operator = self.get_operator_csv(csvfile, dialect)
 
             csvfile.seek(0)
-            reader = csv.reader(csvfile, dialect)
+            # reader = csv.reader(csvfile, dialect='excel')
+            reader = csv.reader(csvfile, dialect, doublequote=True)
 
             count = 0
-            for row in reader:
-                # print(count)
-                try:
-                    if count < 1:                              
-                        self.numbers_fields = self.get_numbers_fields(row)
-                    else:
-                        sim_info = self.get_sims_info(row)
-                        normal_sim_info = self.normal_format_sim(sim_info)
+            for row in reader:                          
+                if count < 1:                              
+                    self.numbers_fields = self.get_numbers_fields(row)
+                else:
+                    sim_info = self.get_sims_info(row)
+                    normal_sim_info = self.normal_format_sim(sim_info)
+                    if normal_sim_info['number_tel'] != 0:
                         hash_sim_info = self.calc_hash_for_data(normal_sim_info)
                         list_sims.append(hash_sim_info)
-                    count += 1
-                    # print(row)
-                except Exception as ex:
-                    print(ex.args)
+                count += 1
+        list_sims.sort(key=lambda x: x['number_tel'])
+        print(f'Total lines in file: {count-1}')
         return list_sims
 
 
 def start():
 
-    # file = 'simCardList_20230321_092640.csv'
+    file = 'simCardList_20230321_092640.csv'
     # file = 'sims_64195945940495.62936039.csv'
-    file = '20221222_Билайн_выгрузкаМ2М_MOESK_21_12.csv'
+    # file = '20221222_Билайн_выгрузкаМ2М_MOESK_21_12.csv'
     dir = 'test'
 
     get_sims = FileReaderCsv(dir, file)
 
-    a = get_sims.get_list_tuple_sims()
+    a = get_sims.get_list_sims()
 
     print(1)
