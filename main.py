@@ -13,10 +13,13 @@ def data():
     # file = '20221222_Билайн_выгрузкаМ2М_MOESK_21_12.csv'
 
     # file = 'mts.csv'
-    file = 'megafon.csv'
+    # file = 'megafon.csv'
     # file = 'belline.csv'
+    file = 'sims_642bdbaf194fe5.09954622.csv'
 
-    dir = 'mini_test'
+    # dir = 'mini_test'
+    dir = '20230404'
+
     handler_file_csv(dir, file)
 
 def create_db_start():

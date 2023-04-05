@@ -4,6 +4,6 @@
 */*/__pycache__/
 */*/*/__pycache__/
 .env
-/sims_files/test/
+/sims_files/*
 /tests/files/filereader/*.csv
 *.zip
