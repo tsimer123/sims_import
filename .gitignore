@@ -7,3 +7,4 @@
 /sims_files/*
 /tests/files/filereader/*.csv
 *.zip
+*.bak
