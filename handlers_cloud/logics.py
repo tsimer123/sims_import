@@ -4,6 +4,9 @@ from pathlib import Path
 import re
 import zipfile
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+
 
 from handlers_cloud.cloudconnect import CloudConnect, merging_dirs, check_dir
 from handlers_cloud.union_csv import union_files
@@ -14,6 +17,7 @@ from handlers_db.queries import write_new_dirs, get_objs_cloud, write_new_conten
 
 from exceptions.exceptions import EmptyDirectory
 
+load_dotenv()
 
 def replace_name_dirs_cloud(list_dirs: List[str]) -> List[str]:
 
@@ -95,8 +99,8 @@ def handler_csv(path_route: str, line_contents: str, client: Client,
                      line_list_cloud: str, dirs_id_in: int) -> str:    
 
     remote_rout_to_file = merging_dirs([path_route, line_contents])    
-    local_rout_to_file = str(Path('sims_files', line_list_cloud, line_contents))
-    check_dir(['sims_files', line_list_cloud])
+    local_rout_to_file = str(Path(os.getenv('dir_sims_parent'), line_list_cloud, line_contents))
+    check_dir([os.getenv('dir_sims_parent'), line_list_cloud])
     client.download_sync(remote_path=remote_rout_to_file,
                             local_path=local_rout_to_file)                    
     operator = handler_file_csv(line_list_cloud, line_contents)
@@ -116,13 +120,13 @@ def handler_zip(path_route: str, line_contents: str, client: Client,
                      line_list_cloud: str, dirs_id_in: int) -> str:
     
     remote_rout_to_file = merging_dirs([path_route, line_contents])    
-    local_rout_to_file = str(Path('sims_files', line_list_cloud, line_contents))
-    check_dir(['sims_files', line_list_cloud])
+    local_rout_to_file = str(Path(os.getenv('dir_sims_parent'), line_list_cloud, line_contents))
+    check_dir([os.getenv('dir_sims_parent'), line_list_cloud])
     client.download_sync(remote_path=remote_rout_to_file,
                             local_path=local_rout_to_file)
     
     archive = local_rout_to_file
-    route_to_extract = Path('sims_files', line_list_cloud)
+    route_to_extract = Path(os.getenv('dir_sims_parent'), line_list_cloud)
     with zipfile.ZipFile(archive, 'r') as zip_file:
         zip_file.extractall(route_to_extract)
 
@@ -144,13 +148,13 @@ def handler_mgf(path_route: str, line_contents: str, client: Client,
                      line_list_cloud: str, dirs_id_in: int) -> str:    
 
     remote_rout_to_file = merging_dirs([path_route, line_contents])    
-    local_rout_to_file = str(Path('sims_files', line_list_cloud, line_contents))
-    check_dir(['sims_files', line_list_cloud])
+    local_rout_to_file = str(Path(os.getenv('dir_sims_parent'), line_list_cloud, line_contents))
+    check_dir([os.getenv('dir_sims_parent'), line_list_cloud])
     client.download_sync(remote_path=remote_rout_to_file,
                             local_path=local_rout_to_file)                    
     
     route_in_files = str(Path(line_list_cloud, line_contents))
-    route_out_file = str(Path('sims_files', line_list_cloud))
+    route_out_file = str(Path(os.getenv('dir_sims_parent'), line_list_cloud))
     
     try:
         name_out_files = union_files(route_in_files, route_out_file)    
