@@ -1,13 +1,15 @@
 from sqlalchemy.orm import sessionmaker
 from typing import List
 from sqlalchemy import update
+from datetime import datetime
 
 from global_var import dict_name_operators
 
 from sql.engine import engine
-from sql.scheme import Sims, ImportSimsLog, UpdateSimLog
+from sql.scheme import Sims, ImportSimsLog, UpdateSimLog, Dirs, ContentsDirs
 
-from handlers_db.sql_type_data import SimInfo, ImportSimsLogInfo, UpdateSimLogInfo
+from handlers_db.sql_type_data import SimInfo, ImportSimsLogInfo, UpdateSimLogInfo,\
+    DirsInfo, ContentsDirsInfo
 from handlers_data.data_type_data import SimFieldsData
 
 Session = sessionmaker(engine)
@@ -249,3 +251,127 @@ def format_update_log(change_log: list[UpdateSimLogInfo]) -> List[UpdateSimLogIn
         list_update.append(tmp_update)
             
     return list_update
+
+
+def get_root_dir_cloud() -> List[DirsInfo]:
+
+    list_dir = []
+
+    try:
+        dir_info = session.query(Dirs).order_by(Dirs.name_dir).all()
+        for line_dir_info in dir_info:
+            list_dir.append(format_one_dir_info_cloud(line_dir_info))        
+    except Exception as ex:
+        raise ex
+    finally:
+        session.close()
+
+    return list_dir
+
+
+def format_one_dir_info_cloud(dir_info: Dirs) -> DirsInfo:    
+
+    if dir_info is not None:
+        dict_dir_info = DirsInfo(
+            dirs_id = dir_info.dirs_id,
+            name_dir = dir_info.name_dir,
+            state = dir_info.state,
+            created_on = dir_info.created_on,
+            update_on = dir_info.update_on            
+        )
+    else:
+        dict_dir_info = DirsInfo(dirs_id = 0)       
+
+    return dict_dir_info
+
+
+def get_objs_cloud(dirs_id: int) -> List[ContentsDirsInfo]:
+    
+    list_objs = []
+
+    try:
+        objs_info = session.query(ContentsDirs).filter(
+            ContentsDirs.dirs_id == dirs_id
+            ).order_by(ContentsDirs.contentsdirs_id).all()
+        for line_objs_info in objs_info:
+            list_objs.append(format_one_objs_cloud(line_objs_info))        
+    except Exception as ex:
+        raise ex
+    finally:
+        session.close()
+
+    return list_objs
+
+
+def format_one_objs_cloud(objs_info: ContentsDirs) -> ContentsDirsInfo:    
+
+    if objs_info is not None:
+        dict_objs_info = ContentsDirsInfo(
+            contentsdirs_id = objs_info.contentsdirs_id,
+            dirs_id = objs_info.dirs_id,
+            name_obj = objs_info.name_obj,
+            state = objs_info.state,
+            created_on = objs_info.created_on,
+            update_on = objs_info.update_on            
+        )
+    else:
+        dict_objs_info = ContentsDirsInfo(dirs_id = 0)       
+
+    return dict_objs_info
+
+
+def write_new_dirs(info_dir: DirsInfo) -> Dirs:
+    
+    dir = format_in_dirs(info_dir)
+
+    session.add(dir)
+
+    session.commit()
+
+    return dir
+
+
+def write_update_dirs(dirs_import: Dirs):   
+
+    session.execute(update(Dirs),[dirs_import],)    
+
+    session.commit() 
+
+
+def format_in_dirs(info_dir_in: DirsInfo) -> Dirs:
+
+    dir = Dirs()
+
+    if 'dirs_id' in info_dir_in:
+        dir.dirs_id = info_dir_in['dirs_id']
+    if 'name_dir' in info_dir_in:
+        dir.name_dir = info_dir_in['name_dir']
+    if 'state' in info_dir_in:
+        dir.state = info_dir_in['state'] 
+
+    return dir
+
+
+def write_new_contentsdirs(info_contents: ContentsDirsInfo) -> None:
+    
+    contents = format_in_contentsdirs(info_contents)
+
+    session.add(contents)
+
+    session.commit()
+
+
+def format_in_contentsdirs(info_contents_in: ContentsDirsInfo) -> ContentsDirs:
+
+    info_contents = ContentsDirs()
+
+    if 'dirs_id' in info_contents_in:
+        info_contents.dirs_id = info_contents_in['dirs_id']
+    if 'name_obj' in info_contents_in:
+        info_contents.name_obj = info_contents_in['name_obj']
+    if 'additions' in info_contents_in:
+        info_contents.additions = info_contents_in['additions']
+    if 'state' in info_contents_in:
+        info_contents.state = info_contents_in['state']
+    
+    return info_contents

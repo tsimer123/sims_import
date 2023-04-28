@@ -36,6 +36,7 @@ class Sims(Base):
 
      updatesimlog: Mapped[List["UpdateSimLog"]] = relationship(back_populates="sims")
 
+
 class ImportSimsLog(Base):
      __tablename__ = "importsimslog"
 
@@ -73,6 +74,32 @@ class UpdateSimLog(Base):
      sims: Mapped[List["Sims"]] = relationship(back_populates="updatesimlog")
      importsimslog: Mapped[List["ImportSimsLog"]] = relationship(back_populates="updatesimlog")
 
+
+class Dirs(Base):
+     __tablename__ = "dirs"
+
+     dirs_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+     name_dir: Mapped[str]
+     state: Mapped[Optional[str]] = mapped_column(String(50))
+     created_on: Mapped[datetime] = mapped_column(DateTime(), default=datetime.now)
+     update_on: Mapped[Optional[datetime]] = mapped_column(DateTime(), default=datetime.now, onupdate=datetime.now)
+
+     contentsdirs: Mapped[List["ContentsDirs"]] = relationship(back_populates="dirs")
+
+
+class ContentsDirs(Base):
+     __tablename__ = "contentsdirs"
+
+     contentsdirs_id: Mapped[int] = mapped_column(primary_key=True)
+     dirs_id = mapped_column(ForeignKey("dirs.dirs_id"))
+     name_obj: Mapped[str]
+     additions: Mapped[Optional[str]]
+     state: Mapped[Optional[str]] = mapped_column(String(50))
+     created_on: Mapped[datetime] = mapped_column(DateTime(), default=datetime.now)
+     update_on: Mapped[Optional[datetime]] = mapped_column(DateTime(), default=datetime.now, onupdate=datetime.now)
+
+     dirs: Mapped[List["Dirs"]] = relationship(back_populates="contentsdirs")
+    
 
 def create_db():
      Base.metadata.create_all(engine)     

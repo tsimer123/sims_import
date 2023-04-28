@@ -10,14 +10,22 @@ from handlers_db.queries import get_sim_operator, write_new_sims, write_new_impo
 from handlers_db.sql_type_data import SimInfo, ImportSimsLogInfo, UpdateSimLogInfo
 from exceptions.exceptions import NotOneOperatorInFile
 from handlers_files.type_data import SimFields
-from handlers_data.data_type_data import SimFieldsData, dict_count_import_sim
+from handlers_data.data_type_data import SimFieldsData
 
 
 load_dotenv()
 
-def handler_file_csv(in_dir_files: str, in_name_files: str) -> None:
+def handler_file_csv(in_dir_files: str, in_name_files: str) -> str:
 
-    print(f'Start processing file: "{in_name_files}"')
+    dict_count_import_sim_out = {
+        'count_all': None,
+        'count_new': None,
+        'count_update': None,
+        'count_del': None,
+        'restored_del': None,
+    }
+
+    print(f'{str(datetime.now())}: start processing file: "{in_name_files}"')
 
     # добавление записи в ImportSimsLog о старте импорта
     import_log_info_start = ImportSimsLogInfo(
@@ -43,7 +51,7 @@ def handler_file_csv(in_dir_files: str, in_name_files: str) -> None:
     if len(list_sims_present_db) == 0: # если из БД ничего не вернулось, то по этому оператору нет данныз в БД, заносим все данные из csv файла
         list_sim_to_db = preparation_new_sims_for_db(list_sims_csv, date_create_file)
         write_new_sims(list_sim_to_db)
-        dict_count_import_sim['count_new'] = len(list_sim_to_db)
+        dict_count_import_sim_out['count_new'] = len(list_sim_to_db)
     else: # в простивном случае начинамем разделять сим карты на типы (новые, обновленные, удаленные, восстановленные)   
         # создаем списки только с номерами телефонов
         list_number_tel_csv = get_number_tel_from_list_file(list_sims_csv)
@@ -57,7 +65,7 @@ def handler_file_csv(in_dir_files: str, in_name_files: str) -> None:
         if len(list_new_sims) > 0:
             list_new_sims_to_db = preparation_new_sims_for_db(list_new_sims, date_create_file)
             write_new_sims(list_new_sims_to_db)
-            dict_count_import_sim['count_new'] = len(list_new_sims_to_db)
+            dict_count_import_sim_out['count_new'] = len(list_new_sims_to_db)
 
         
         # обработка измененных сим карт
@@ -75,10 +83,10 @@ def handler_file_csv(in_dir_files: str, in_name_files: str) -> None:
                 if del_sim['sims_id'] != 0:
                     list_sim_change_fields.append(del_sim)
                     list_updatelog_sim_change_fields.append(update_sim_to_db(del_sim, import_log_id))
-                    if dict_count_import_sim['count_del'] is None:
-                        dict_count_import_sim['count_del'] = 1
+                    if dict_count_import_sim_out['count_del'] is None:
+                        dict_count_import_sim_out['count_del'] = 1
                     else:
-                        dict_count_import_sim['count_del'] += 1
+                        dict_count_import_sim_out['count_del'] += 1
 
         # обрабокта сим карт появившихся в ЛК после удаления
         list_restored_number_tel = intersection_number_sim(list_number_tel_csv, list_number_tel_delete_db)
@@ -93,10 +101,10 @@ def handler_file_csv(in_dir_files: str, in_name_files: str) -> None:
                         restored_sim = search_change_field(sim_in_csv_present, sim_in_db_present, restored_sim)
                     list_sim_change_fields.append(restored_sim)
                     list_updatelog_sim_change_fields.append(update_sim_to_db(restored_sim, import_log_id))
-                    if dict_count_import_sim['restored_del'] is None:
-                        dict_count_import_sim['restored_del'] = 1
+                    if dict_count_import_sim_out['restored_del'] is None:
+                        dict_count_import_sim_out['restored_del'] = 1
                     else:
-                        dict_count_import_sim['restored_del'] += 1               
+                        dict_count_import_sim_out['restored_del'] += 1               
 
         # проверка сим карты на изменение полей
         other_sim = list_number_tel_csv
@@ -112,28 +120,30 @@ def handler_file_csv(in_dir_files: str, in_name_files: str) -> None:
                     change_fields = get_change_new_field(sim_in_csv, sim_in_db)
                     list_sim_change_fields.append(change_fields)
                     list_updatelog_sim_change_fields.append(update_sim_to_db(change_fields, import_log_id))
-                    if dict_count_import_sim['count_update'] is None:
-                        dict_count_import_sim['count_update'] = 1
+                    if dict_count_import_sim_out['count_update'] is None:
+                        dict_count_import_sim_out['count_update'] = 1
                     else:
-                        dict_count_import_sim['count_update'] += 1   
+                        dict_count_import_sim_out['count_update'] += 1   
             # запись измененных сим карт в БД
             update_change_sims(list_sim_change_fields, list_updatelog_sim_change_fields)
 
     # получаем общее количество всех обработаннахы сим карт
-    count_all_sims = count_all_import_sims(dict_count_import_sim)
-    dict_count_import_sim['count_all'] = count_all_sims
+    count_all_sims = count_all_import_sims(dict_count_import_sim_out)
+    dict_count_import_sim_out['count_all'] = count_all_sims
     # подготовка сведений об обработанных сим картах и результов работы скрипта для обновления importsimslog
     import_log_info_end = ImportSimsLogInfo(
         importsimslog_id=import_log_id,
         state='successfully', 
         count_import_sim=count_all_sims,
         count_sim_file=len(list_sims_csv),
-        description=count_import_sims_in_str(dict_count_import_sim))
+        description=count_import_sims_in_str(dict_count_import_sim_out))
     
     # обновление записи в importsimslog
     import_log_id = write_update_import_log(import_log_info_end)
 
-    print(f'End processing file: "{in_name_files}"\nresults: {import_log_info_end["description"]}')   
+    print(f'{str(datetime.now())}: end processing file: "{in_name_files}"\n--results: {import_log_info_end["description"]}')
+
+    return list_sims_csv[0]['operator']
 
 
 def check_count_operators_in_file(list_sims: list[SimFields]) -> None:
@@ -289,11 +299,6 @@ def get_change_new_field(csv: SimFields, db: SimInfo) -> SimInfo:
 
     change_fields = search_change_field(csv, db, change_fields)
     
-    # for key, value in csv.items():
-    #     if key in db:
-    #         if db[key] != value:
-    #             change_fields[key] = value
-
     return change_fields
 
 
@@ -307,22 +312,22 @@ def search_change_field(csv: SimFields, db: SimInfo, change_fields: SimInfo) -> 
     return change_fields
 
 
-def count_all_import_sims(dict_count_import_sim: dict) -> int:
+def count_all_import_sims(dict_count_import_sim_in: dict) -> int:
 
     count_all = 0    
 
-    for line in dict_count_import_sim.values():
+    for line in dict_count_import_sim_in.values():
         if line is not None:
             count_all += line
 
     return count_all
 
 
-def count_import_sims_in_str(dict_count_import_sim: dict) -> str:
+def count_import_sims_in_str(dict_count_import_sim_in: dict) -> str:
 
     count_str = ''   
 
-    for key, value in dict_count_import_sim.items():
+    for key, value in dict_count_import_sim_in.items():
         if value is not None:
             count_str += f'{key}: {value}, '
 

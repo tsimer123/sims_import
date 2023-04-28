@@ -32,7 +32,7 @@ class ImportSimsLogInfo(TypedDict):
 
 
 class UpdateSimLogInfo(TypedDict):
-     updatesimlog_id: Optional[int]
+     updatesimlog_id: int
      sims_id: int
      importsimslog_id: int
      number_tel: Optional[str]
@@ -45,3 +45,21 @@ class UpdateSimLogInfo(TypedDict):
      operator: Optional[str]
      state_in_lk: Optional[str]
      created_on: Optional[datetime]
+
+
+class DirsInfo(TypedDict):
+     dirs_id: int
+     name_dir: str
+     state: str
+     created_on: datetime
+     update_on: datetime
+
+
+class ContentsDirsInfo(TypedDict):
+     contentsdirs_id: int
+     dirs_id: int
+     name_obj: str
+     additions: str
+     state: str
+     created_on: datetime
+     update_on: datetime
