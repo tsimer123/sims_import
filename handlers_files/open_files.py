@@ -254,8 +254,40 @@ class FileReaderCsv(FileReader):
                         list_sims.append(hash_sim_info)
                 count += 1
         list_sims.sort(key=lambda x: x['number_tel'])
-        print(f'Total lines in file: {count-1}')
+        print(f'{str(datetime.now())}: total lines in file: {count-1}')
         return list_sims
+    
+    def get_raw_rows(self) -> List[List[str]]:
+
+        path_files = self._get_path_files()
+        encoding_file = self._get_encoding()
+
+        list_row = []
+        
+        with open(path_files, newline='', encoding=encoding_file) as csvfile:
+           
+            csvfile.seek(0)
+            dialect = csv.Sniffer().sniff(csvfile.readline())          
+            
+            csvfile.seek(0)            
+            reader = csv.reader(csvfile, dialect, doublequote=True)
+
+            for row in reader:
+                list_row.append(row)                        
+                
+        return list_row
+    
+    def get_dialect_csv(self) :       
+
+        path_files = self._get_path_files()
+        encoding_file = self._get_encoding()        
+        
+        with open(path_files, newline='', encoding=encoding_file) as csvfile:
+           
+            csvfile.seek(0)
+            dialect = csv.Sniffer().sniff(csvfile.readline())       
+             
+        return dialect
 
 
 def start():

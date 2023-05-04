@@ -6,3 +6,7 @@ class NotValidFile(Exception):
 
 class NotOneOperatorInFile(Exception):
     """Not one operator in file"""
+
+class EmptyDirectory(Exception):
+    """There are no files in the directory"""
+    
