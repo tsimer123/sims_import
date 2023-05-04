@@ -7,13 +7,14 @@ from handlers_data.sims import handler_file_csv
 from sql.scheme import create_db
 from handlers_cloud.cloud import nahdler_connect_cloud
 
+
 def csv():
     start()
 
 def data():   
     
     file = 'belline.csv'
-    dir = 'mini_test'  
+    dir = 'mini_test'
 
     handler_file_csv(dir, file)
 
@@ -28,6 +29,6 @@ def cloud():
         print(f'{str(datetime.now())}: error: {str(ex.args)}')
 
 
-if __name__ == "__main__":  
-       
+if __name__ == "__main__":         
+
     cloud()

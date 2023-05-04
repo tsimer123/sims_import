@@ -3,11 +3,11 @@ from typing import List
 from sqlalchemy import update
 from datetime import datetime
 
+
 from global_var import dict_name_operators
 
 from sql.engine import engine
 from sql.scheme import Sims, ImportSimsLog, UpdateSimLog, Dirs, ContentsDirs
-
 from handlers_db.sql_type_data import SimInfo, ImportSimsLogInfo, UpdateSimLogInfo,\
     DirsInfo, ContentsDirsInfo
 from handlers_data.data_type_data import SimFieldsData
@@ -249,7 +249,7 @@ def format_update_log(change_log: list[UpdateSimLogInfo]) -> List[UpdateSimLogIn
             tmp_update.state_in_lk = line_change_log['state_in_lk']
 
         list_update.append(tmp_update)
-            
+
     return list_update
 
 
@@ -375,3 +375,4 @@ def format_in_contentsdirs(info_contents_in: ContentsDirsInfo) -> ContentsDirs:
         info_contents.state = info_contents_in['state']
     
     return info_contents
+  

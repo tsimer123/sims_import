@@ -46,7 +46,6 @@ class UpdateSimLogInfo(TypedDict):
      state_in_lk: Optional[str]
      created_on: Optional[datetime]
 
-
 class DirsInfo(TypedDict):
      dirs_id: int
      name_dir: str

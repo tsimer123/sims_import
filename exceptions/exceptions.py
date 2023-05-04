@@ -9,3 +9,4 @@ class NotOneOperatorInFile(Exception):
 
 class EmptyDirectory(Exception):
     """There are no files in the directory"""
+    
