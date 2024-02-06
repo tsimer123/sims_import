@@ -34,8 +34,9 @@ def handler_file_csv(in_dir_files: str, in_name_files: str) -> str:
     )
     import_log_id = write_new_import_log(import_log_info_start)   
 
-    # получение даты создания(последний модификации файла)
-    date_create_file = get_create_file(in_dir_files, in_name_files)
+    # получение даты загрузки из названия папки
+    # date_create_file = get_create_file(in_dir_files, in_name_files)
+    date_create_file = datetime.strptime(in_dir_files, '%Y%m%d')
     # получение списка из csv файла
     get_sims_csv = FileReaderCsv(in_dir_files, in_name_files)
     list_sims_csv = get_sims_csv.get_list_sims()
@@ -65,8 +66,8 @@ def handler_file_csv(in_dir_files: str, in_name_files: str) -> str:
         if len(list_new_sims) > 0:
             list_new_sims_to_db = preparation_new_sims_for_db(list_new_sims, date_create_file)
             write_new_sims(list_new_sims_to_db)
-            dict_count_import_sim_out['count_new'] = len(list_new_sims_to_db)
-        
+            dict_count_import_sim_out['count_new'] = len(list_new_sims_to_db)        
+
         # обработка измененных сим карт
         list_sim_change_fields = [] # список сим карт с изменеными полями
         list_updatelog_sim_change_fields = [] # список с логом изменения полей у сим карты
@@ -116,7 +117,7 @@ def handler_file_csv(in_dir_files: str, in_name_files: str) -> str:
                 sim_in_csv = search_sim_in_csv(line_other_sim, list_sims_csv)
                 sim_in_db = search_sim_in_db(line_other_sim, list_sims_present_db)
                 if sim_in_csv['hash_data'] != sim_in_db['hash_data']:
-                    change_fields = get_change_new_field(sim_in_csv, sim_in_db)
+                    change_fields = get_change_new_field(sim_in_csv, sim_in_db, date_create_file)
                     list_sim_change_fields.append(change_fields)
                     list_updatelog_sim_change_fields.append(update_sim_to_db(change_fields, import_log_id))
                     if dict_count_import_sim_out['count_update'] is None:
@@ -156,7 +157,7 @@ def check_count_operators_in_file(list_sims: list[SimFields]) -> None:
         raise NotOneOperatorInFile('File contains more than one statement')
     
 
-def get_create_file(dir_files: str, name_files: str):
+def get_create_file(dir_files: str, name_files: str)-> datetime:
     
     dir_sims_parent = os.getenv('dir_sims_parent')
     path = Path(dir_sims_parent, dir_files, name_files)
@@ -293,12 +294,13 @@ def update_sim_to_db(sim_info: SimInfo, importsimslog_id: int) -> UpdateSimLogIn
     return update_sim
 
 
-def get_change_new_field(csv: SimFields, db: SimInfo) -> SimInfo:
+def get_change_new_field(csv: SimFields, db: SimInfo, date_create_file: datetime) -> SimInfo:
     
     change_fields = SimInfo(sims_id=db['sims_id'])
+    change_fields['last_upload'] = date_create_file
 
-    change_fields = search_change_field(csv, db, change_fields)    
-
+    change_fields = search_change_field(csv, db, change_fields)
+    
     return change_fields
 
 
@@ -310,6 +312,7 @@ def search_change_field(csv: SimFields, db: SimInfo, change_fields: SimInfo) -> 
                 change_fields[key] = value
     
     return change_fields
+
 
 def count_all_import_sims(dict_count_import_sim_in: dict) -> int:
 

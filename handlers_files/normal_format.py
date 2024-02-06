@@ -4,6 +4,8 @@ from datetime import datetime
 
 from handlers_files.type_data import SimFields
 
+from exceptions.exceptions import NotValidSIMActivity
+
 class NormalFormat:
 
     # переписать под список
@@ -62,7 +64,9 @@ class NormalFormat:
                     sim_info['activity'] = datetime_object
                 except Exception as ex:
                     print(str(ex.args))
-                    print('bad format activity to sim: ' + sim_info['number_tel'] + ' - ' + sim_info['activity'])  
+                    text_ex = ('bad format activity to sim: ' + sim_info['number_tel'] + ' - ' + sim_info['activity'])
+                    print('bad format activity to sim: ' + sim_info['number_tel'] + ' - ' + sim_info['activity'])
+                    raise NotValidSIMActivity(text_ex)
             else:
                 sim_info.pop('activity')
         return sim_info

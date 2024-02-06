@@ -9,4 +9,7 @@ class NotOneOperatorInFile(Exception):
 
 class EmptyDirectory(Exception):
     """There are no files in the directory"""
+
+class NotValidSIMActivity(Exception):
+    """The last activity of the SIM card is recorded in an incorrect format"""
     
