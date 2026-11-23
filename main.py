@@ -22,7 +22,7 @@ def create_db_start():
 
 def cloud():
     date_now = str(datetime.now().date()).replace('-', '')
-    # date_now = "20231123"
+    # date_now = "20231205"
     try:    
         nahdler_connect_cloud(date_now)
     except Exception as ex:

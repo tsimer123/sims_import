@@ -60,7 +60,10 @@ class NormalFormat:
                 try:
                     tmp_date = sim_info['activity']
                     tmp_date = self.replace_month_str_to_int(tmp_date)
-                    datetime_object = datetime.strptime(tmp_date, "%d %m %Y %H:%M")
+                    try:
+                        datetime_object = datetime.strptime(tmp_date, "%d %m %Y %H:%M")
+                    except:
+                        datetime_object = datetime.strptime(tmp_date, "%d.%m.%Y %H:%M:%S")
                     sim_info['activity'] = datetime_object
                 except Exception as ex:
                     print(str(ex.args))
