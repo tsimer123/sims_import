@@ -14,6 +14,7 @@ from handlers_data.sims import handler_file_csv
 from handlers_db.sql_type_data import DirsInfo, ContentsDirsInfo
 from handlers_db.queries import write_new_dirs, get_objs_cloud, write_new_contentsdirs,\
     write_update_dirs
+from handlers_files.excel_converter import ConvertExcel
 
 from exceptions.exceptions import EmptyDirectory
 
@@ -175,8 +176,130 @@ def handler_mgf(path_route: str, line_contents: str, client: Client,
 
     return operator
 
-    
 
+# def handler_ex_(path_route: str, line_contents: str, client: Client,
+#                      line_list_cloud: str, dirs_id_in: int) -> str:
+    
+#     print(f'{str(datetime.now())}: start handler_ex')
+
+#     remote_rout_to_file = merging_dirs([path_route, line_contents])    
+#     local_rout_to_file = str(Path(os.getenv('dir_sims_parent'), line_list_cloud, line_contents))
+#     check_dir([os.getenv('dir_sims_parent'), line_list_cloud])
+#     client.download_sync(remote_path=remote_rout_to_file,
+#                             local_path=local_rout_to_file)
+#     list_files_excel = sorted(os.listdir(local_rout_to_file))
+#     try:
+#         name_file_csv = None
+#         operator = ''
+#         print(f'{str(datetime.now())}: start processing excel dir')
+#         for line in list_files_excel:
+#             if 'megafon' in str(line).lower() or 'мегафон' in str(line).lower():
+#                 print(f'{str(datetime.now())}: start processing handler_ex megafon')
+#                 local_rout_to_file_ex_in = str(Path(local_rout_to_file, line))
+#                 name_file_csv = line.replace('.xlsx', '.csv')
+#                 local_rout_to_file_ex_out = str(Path(os.getenv('dir_sims_parent'), line_list_cloud, name_file_csv))
+#                 excel_c = ConvertExcel(local_rout_to_file_ex_in, local_rout_to_file_ex_out)
+#                 excel_c.excel_to_csv()
+#                 print(f'{str(datetime.now())}: csv file from excel ready')
+#                 if Path(local_rout_to_file_ex_out).exists():
+#                     print(f'{str(datetime.now())}: push csv file megafon in handler csv')
+#                     operator = handler_file_csv(line_list_cloud, name_file_csv)
+#                     print(f'{str(datetime.now())}: good result csv file megafon in handler csv')
+#                 else:
+#                    print(f'{str(datetime.now())}: bad result csv file megafon in handler csv')
+#                    raise EmptyDirectory(f'Not file {name_file_csv}')
+#                 print(f'{str(datetime.now())}: end processing handler_ex megafon')
+#     except EmptyDirectory as ex:
+#         name_file_csv = str(ex.args)
+#         operator = ''
+
+#     print(f'{str(datetime.now())}: end processing excel dir')
+#     if name_file_csv is not None:
+#         obj_info = ContentsDirsInfo(
+#             dirs_id=dirs_id_in,
+#             name_obj=name_file_csv,
+#             state='completed'
+#         )
+
+#         write_new_contentsdirs(obj_info)
+#     print(f'{str(datetime.now())}: end processing handler_ex megafon')
+
+#     return operator
+
+
+def handler_ex(path_route: str, line_contents: str, client: Client,
+                     line_list_cloud: str, dirs_id_in: int) -> str:
+    
+    print(f'{str(datetime.now())}: start handler_ex')
+
+    remote_rout_to_file = merging_dirs([path_route, line_contents])    
+    local_rout_to_file = str(Path(os.getenv('dir_sims_parent'), line_list_cloud, line_contents))
+    check_dir([os.getenv('dir_sims_parent'), line_list_cloud])
+    client.download_sync(remote_path=remote_rout_to_file,
+                            local_path=local_rout_to_file)
+    list_files_excel = sorted(os.listdir(local_rout_to_file))
+    
+    print(f'{str(datetime.now())}: start processing excel dir')
+    operator_out = ''
+    for line in list_files_excel:
+        if 'megafon' in str(line).lower() or 'мегафон' in str(line).lower():
+            operator = iter_excel_dir('megafon', local_rout_to_file, line,
+                                      line_list_cloud, dirs_id_in)
+            operator_out = operator_out + ' ' + operator
+        if 'beeline' in str(line).lower() or 'билайн' in str(line).lower():
+            operator = iter_excel_dir('beeline', local_rout_to_file, line,
+                                      line_list_cloud, dirs_id_in)
+            operator_out = operator_out + ' ' + operator
+        if 'mts' in str(line).lower() or 'мтс' in str(line).lower():
+            operator = iter_excel_dir('mts', local_rout_to_file, line,
+                                      line_list_cloud, dirs_id_in)
+            operator_out = operator_out + ' ' + operator
+
+    print(f'{str(datetime.now())}: end processing excel dir')
+
+    print(f'return operator_out: {operator_out}')
+
+    operator_out = operator_out.strip()
+    return operator_out
+
+
+def iter_excel_dir(name_operator: str, local_rout_to_file: Path, line: str,
+                   line_list_cloud: str, dirs_id_in: int)-> str:
+    
+    operator = ''
+    name_file_csv = None
+    try:        
+        print(f'{str(datetime.now())}: start processing handler_ex {name_operator}')
+        local_rout_to_file_ex_in = str(Path(local_rout_to_file, line))
+        name_file_csv = line.replace('.xlsx', '.csv')
+        local_rout_to_file_ex_out = str(Path(os.getenv('dir_sims_parent'), line_list_cloud, name_file_csv))
+        excel_c = ConvertExcel(local_rout_to_file_ex_in, local_rout_to_file_ex_out, name_operator)
+        excel_c.excel_to_csv()
+        print(f'{str(datetime.now())}: csv file from excel ready')
+        if Path(local_rout_to_file_ex_out).exists():
+            print(f'{str(datetime.now())}: push csv file {name_operator} in handler csv')
+            operator = handler_file_csv(line_list_cloud, name_file_csv)
+            print(f'{str(datetime.now())}: good result csv file {name_operator} in handler csv')
+        else:
+            print(f'{str(datetime.now())}: bad result csv file {name_operator} in handler csv')
+            raise EmptyDirectory(f'Not file {name_file_csv}')
+        print(f'{str(datetime.now())}: end processing handler_ex {name_operator}')
+    except EmptyDirectory as ex:
+        # name_file_csv = str(ex.args)
+        print(f'{str(datetime.now())}: error (iter_excel_dir): name line - {line}, ex.args={str(ex.args)}')
+    
+    if name_file_csv is not None:
+        obj_info = ContentsDirsInfo(
+            dirs_id=dirs_id_in,
+            name_obj=name_file_csv,
+            state='completed'
+        )
+        write_new_contentsdirs(obj_info)
+
+    print(f'return operator: {operator}')
+    return operator
+
+    
 def walker_dirs_cloud(list_cloud: List[str], client: Client, cloud: CloudConnect,
                       dir_root: str, list_db: List[DirsInfo]) -> List[dict]:
 
@@ -231,7 +354,15 @@ def walker_dirs_cloud(list_cloud: List[str], client: Client, cloud: CloudConnect
                                 if dirs_info['state'] is not None:
                                     dirs_info['state'] = dirs_info['state'] + ' ' + operator
                                 else:
-                                    dirs_info['state'] = operator                
+                                    dirs_info['state'] = operator
+                            if line_contents == 'Excel/':
+                                operator = handler_ex(
+                                    path_route, line_contents, client, line_list_cloud, line_list_db['dirs_id']
+                                )
+                                if dirs_info['state'] is not None:
+                                    dirs_info['state'] = dirs_info['state'] + ' ' + operator
+                                else:
+                                    dirs_info['state'] = operator
                 if dirs_info['state'] == dict_dir_cloud["state"]:
                     dict_dir_cloud["state"] = 'Not data in dir'
                 else:
@@ -271,6 +402,14 @@ def walker_dirs_cloud(list_cloud: List[str], client: Client, cloud: CloudConnect
                         operator = handler_mgf(
                             path_route, line_contents, client, line_list_cloud, dirs_new_info['dirs_id']
                         )
+                        if dirs_new_info['state'] is not None:
+                            dirs_new_info['state'] = dirs_new_info['state'] + ' ' + operator
+                        else:
+                            dirs_new_info['state'] = operator
+                    if line_contents == 'Excel/':
+                        operator = handler_ex(
+                            path_route, line_contents, client, line_list_cloud, line_list_db['dirs_id']
+                                )
                         if dirs_new_info['state'] is not None:
                             dirs_new_info['state'] = dirs_new_info['state'] + ' ' + operator
                         else:
